@@ -4,7 +4,7 @@ suits = ["diamonds", "spades", "hearts", "clubs"]
 ranks = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"]
 hands = ["High Card", "Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straigh Flush"]
 odds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-values = [-1, -1, 0, 1, 1, 2, 2.5, 3, 6]
+values = [-1, -1, 2, 3, 4, 6, 9, 25, 90]
 payout = 0.0
 deck = []
 h = []
@@ -73,7 +73,7 @@ def discard(hand, rank, strat):
 def deal():
 	return deck.pop(0)
 
-trys = input('Enter number of hands: ')
+trys = input('Enter number of plays: ')
 count = 0
 plays = input('Enter number of hands per play: ')
 for k in range(trys):
@@ -85,7 +85,7 @@ for k in range(trys):
 		h.append(deal())
 	r = eval(h)
 
-	h = discard(h, r)
+	#h = discard(h, r)
 	hs = []
 	rs = []
 
