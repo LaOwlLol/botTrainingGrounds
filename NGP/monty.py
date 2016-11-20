@@ -5,10 +5,10 @@ ranks = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
 hands = ["High Card", "Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straigh Flush"]
 odds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 values = [-1, -1, 2, 3, 4, 6, 9, 25, 90]
-stg = [ [6, 5, 0, 1],
-[6, 5, 2, 0],
-[6, 5, 3],
-[6, 5, 4],
+stg = [ [1, 5, 6],
+[6, 5, 2],
+[3, 5, 6],
+[4, 5, 6],
 [8],
 [8],
 [8],
@@ -301,46 +301,59 @@ def hasFlushDraw(hand):
 def deal():
 	return deck.pop(0)
 
-#trys = input('Enter number of plays: ')
-trys = 100000
+trys = input('Enter number of plays: ')
 plays = input('Enter number of hands per play: ')
-count = 0
-for k in range(trys):
-	h = []
-	deck = list(itertools.product(range(0,13), range(0,4)))
-	random.shuffle(deck)
+best = -100
+while True:
+	count = 0
+	for k in range(trys):
+		h = []
+		deck = list(itertools.product(range(0,13), range(0,4)))
+		random.shuffle(deck)
 
-	for i in range(5):
-		h.append(deal())
-	r = eval(h)
+		for i in range(5):
+			h.append(deal())
+		r = eval(h)
 
-	h = discard(h, r)	
+		h = discard(h, r)	
 
-	hs = []
-	rs = []
+		hs = []
+		rs = []
 
-	#duplicate the held cards for played hands
-	for i in range(plays):
-		count += 1
-		hs.append(h)
-		for j in range(len(hs[i]), 5):
-			hs[i].append(deal())
-		#eval each hand
-		rs.append(eval(hs[i]))
-		payout = payout + values[rs[i]]
-		odds[rs[i]] = odds[rs[i]] + 1.0
+		#duplicate the held cards for played hands
+		for i in range(plays):
+			count += 1
+			hs.append(h)
+			for j in range(len(hs[i]), 5):
+				hs[i].append(deal())
+			#eval each hand
+			rs.append(eval(hs[i]))
+			payout = payout + values[rs[i]]
+			odds[rs[i]] = odds[rs[i]] + 1.0
 
-	#if k%10 == 0:
-	#	print(rbins)
-	#	print(sbins)
+		#if k%10 == 0:
+		#	print(rbins)
+		#	print(sbins)
 
-#print(odds)
+	#print(odds)
 
-for k in range(len(odds)):
-	odds[k] = odds[k]/count
+	for k in range(len(odds)):
+		odds[k] = odds[k]/count
 
-print(odds)
-print(count)
-print(payout)
-print(payout/count)
-print(stg)
+	if (payout/count) > best:
+		best = (payout/count)
+		print(odds)
+		print(count)
+		print(payout)
+		print(payout/count)
+		print(stg)
+	else:
+		print 'no pass: {s} '.format(s=stg)
+
+
+	if best > 0.0:
+		break;
+	else:
+		for i in range(len(stg)):
+			random.shuffle(stg[i])
+			
