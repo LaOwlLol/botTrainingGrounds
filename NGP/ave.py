@@ -301,8 +301,9 @@ def hasFlushDraw(hand):
 def deal():
 	return deck.pop(0)
 
+bigl = 99999
+bigw = -99999
 games = input('Enter the number of \'games\': ')
-
 trys = input('Enter number of plays: ')
 #trys = 100000
 plays = input('Enter number of hands per play: ')
@@ -351,6 +352,11 @@ for n in tqdm(range(games)):
 	#print(odds)
 	#print'Net Pay: {p}'.format(p=payout)
 	#print'Net %: {t}'.format(t=(payout/count))
+	if payout > bigw:
+		bigw = payout
+	elif payout < bigl:
+		bigl = payout
+
 	totpay += payout
 	ave += payout/count
 
@@ -360,4 +366,5 @@ print'Hands Played per \'game\': {c}'.format(c=plays*trys)
 print'\'Average\' odds: {t}'.format(t=totOdds)
 print'\'Average\' Net: {t}'.format(t=(totpay/games))
 print'\'Average\' Net %: {a}'.format(a=ave/games)
+print'\'Max Payout: {b} Min Payout: {l}'.format(b=bigw, l=bigl)
 print(stg)
