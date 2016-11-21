@@ -1,9 +1,9 @@
 import itertools, random
+from tqdm import tqdm
 
 suits = ["diamonds", "spades", "hearts", "clubs"]
 ranks = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"]
 hands = ["High Card", "Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straigh Flush"]
-odds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 values = [-1, -1, 2, 3, 4, 6, 9, 25, 90]
 stg = [ [6, 5, 1],
 [2],
@@ -14,7 +14,7 @@ stg = [ [6, 5, 1],
 [8],
 [7],
 [8]]
-payout = 0.0
+
 deck = []
 h = []
 rbins = []
@@ -301,46 +301,63 @@ def hasFlushDraw(hand):
 def deal():
 	return deck.pop(0)
 
+games = input('Enter the number of \'games\': ')
+
 trys = input('Enter number of plays: ')
 #trys = 100000
 plays = input('Enter number of hands per play: ')
-count = 0
-for k in range(trys):
-	h = []
-	deck = list(itertools.product(range(0,13), range(0,4)))
-	random.shuffle(deck)
 
-	for i in range(5):
-		h.append(deal())
-	r = eval(h)
+totOdds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+totpay = 0.0
+ave = 0.0
+for n in tqdm(range(games)):
+	payout = 0.0
+	count = 0
+	odds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+	for k in range(trys):
+		h = []
+		deck = list(itertools.product(range(0,13), range(0,4)))
+		random.shuffle(deck)
 
-	h = discard(h, r)	
+		for i in range(5):
+			h.append(deal())
+		r = eval(h)
 
-	hs = []
-	rs = []
+		h = discard(h, r)	
 
-	#duplicate the held cards for played hands
-	for i in range(plays):
-		count += 1
-		hs.append(h)
-		for j in range(len(hs[i]), 5):
-			hs[i].append(deal())
-		#eval each hand
-		rs.append(eval(hs[i]))
-		payout = payout + values[rs[i]]
-		odds[rs[i]] = odds[rs[i]] + 1.0
+		hs = []
+		rs = []
 
-	#if k%10 == 0:
-	#	print(rbins)
-	#	print(sbins)
+		#duplicate the held cards for played hands
+		for i in range(plays):
+			count += 1
+			hs.append(h)
+			for j in range(len(hs[i]), 5):
+				hs[i].append(deal())
+			#eval each hand
+			rs.append(eval(hs[i]))
+			payout = payout + values[rs[i]]
+			odds[rs[i]] = odds[rs[i]] + 1.0
 
-#print(odds)
+		#if k%10 == 0:
+		#	print(rbins)
+		#	print(sbins)
 
-for k in range(len(odds)):
-	odds[k] = odds[k]/count
+	#print(odds)
+	for k in range(len(odds)):
+		totOdds[k] += odds[k]/count
 
-print(odds)
-print(count)
-print(payout)
-print(payout/count)
+	#print'GAME: {t}'.format(t=n)
+	#print(odds)
+	#print'Net Pay: {p}'.format(p=payout)
+	#print'Net %: {t}'.format(t=(payout/count))
+	totpay += payout
+	ave += payout/count
+
+for k in range(len(totOdds)):
+		totOdds[k] = totOdds[k]/games
+print'Hands Played per \'game\': {c}'.format(c=plays*trys)
+print'\'Average\' odds: {t}'.format(t=totOdds)
+print'\'Average\' Net: {t}'.format(t=(totpay/games))
+print'\'Average\' Net %: {a}'.format(a=ave/games)
 print(stg)
