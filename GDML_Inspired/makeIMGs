@@ -1,0 +1,1 @@
+convert *.pdf -set filename:f %t %[filename:f].png
