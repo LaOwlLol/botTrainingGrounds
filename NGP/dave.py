@@ -2,7 +2,8 @@ import itertools, random
 from tqdm import tqdm
 from deuces import Deck, Card, Evaluator
 
-values = [90, 25, 9, 6, 4, 3, 2, -1,-1]
+values = [49, 49, 8, 6, 3, 1, 0, -1,-1]
+bonus = [0.0, 79.0, 159.0, 399.0, 799.0]
 stg = [[8], [7], [8], [8], [8], [4], [3], [2], [6, 5, 1]]
 
 def discard(hand, rank):
@@ -240,9 +241,75 @@ def hasFlushDraw(hand):
 	else:
 		return False
 
+ev = Evaluator()
+ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K']
+suits = ['c', 's', 'd', 'h']
+
+aces = [ Card.new('Ac'), Card.new('As'), Card.new('Ad'), Card.new('Ah') ]
+jacks = [ Card.new('Tc'), Card.new('Ts'), Card.new('Ac'), Card.new('Kc'), Card.new('Qc') ]
+
+jackScore = ev.evaluate(jacks, [])
+
+AcesLow = {}
+for k in range(1, 4):
+	for i in range(4):
+		s = ranks[k] + suits[i]
+		aces.append(Card.new(s))
+		#Card.print_pretty_cards(aces)
+		AcesLow[ev.evaluate(aces, [])] = 1
+		aces.pop(4)
+
+LowLow = {}
+for k in range(1, 4):
+
+	q = []
+	for i in range(4):
+		s = ranks[k] + suits[i]
+		q.append(Card.new(s))
+	
+	for r in range(k):
+		for i in range(4):
+			s = ranks[r] + suits[i]
+			q.append(Card.new(s))
+			#Card.print_pretty_cards(q)
+			LowLow[ev.evaluate(q, [])] = 1
+			q.pop(4)
+
+	for r in range(k+1,4):
+		for i in range(4):
+			s = ranks[r] + suits[i]
+			q.append(Card.new(s))
+			#Card.print_pretty_cards(q)
+			LowLow[ev.evaluate(q, [])] = 1
+			q.pop(4)
+
+AcesHigh = {}
+for k in range(4, 13):
+	for i in range(4):
+		s = ranks[k] + suits[i]
+		aces.append(Card.new(s))
+		#Card.print_pretty_cards(aces)
+		AcesHigh[ev.evaluate(aces, [])] = 1
+		aces.pop(4)
+
+LowHigh = {}
+for k in range(1, 4):
+
+	q = []
+	for i in range(4):
+		s = ranks[k] + suits[i]
+		q.append(Card.new(s))
+	
+	for r in range(4, 13):
+		for i in range(4):
+			s = ranks[r] + suits[i]
+			q.append(Card.new(s))
+			#Card.print_pretty_cards(q)
+			LowHigh[ev.evaluate(q, [])] = 1
+			q.pop(4)
 
 deck = Deck()
-ev = Evaluator()
+
 
 bigl = 99999
 bigw = -99999
@@ -261,31 +328,62 @@ for n in tqdm(range(games)):
 	for k in range(trys):
 
 		deck.shuffle()
-		h = deck.draw(5)
+		h1 = deck.draw(5)
 		
-		r = ev.get_rank_class(ev.evaluate(h, []))-1 
+		score = ev.evaluate(h1, [])
+		r = ev.get_rank_class(score)-1 
 
-		h = discard(h, r)	
+		h2 = discard(h1[:], r)	
+
+		# print 'before'
+		# Card.print_pretty_cards(h1)
+		# print 'after'
+		# Card.print_pretty_cards(h2)
 
 		hs = []
-		rs = []
-
+		rs = []	
 		
-		if r < 5:
-			payout += plays * values[r]
-			odds[r] = odds[r] + 1.0
+		#duplicate the held cards for played hands
+		for i in range(plays):
 			count += 1
-		else:
-			#duplicate the held cards for played hands
-			for i in range(plays):
-				count += 1
-				hs.append(h)
-				for j in range(len(hs[i]), 5):
-					hs[i].append(deck.draw(1))
-				#eval each hand
-				rs.append(ev.get_rank_class(ev.evaluate(hs[i], []))-1)
+			hs.append(h2[:])
+			for j in range(len(hs[i]), 5):
+				hs[i].append(deck.draw(1))
+			#eval each hand
+			score = ev.evaluate(hs[i], [])
+			rs.append(ev.get_rank_class(score)-1)
+			if (rs[i] == 7) and (score < jackScore):
+			 	#print 'Jacks or Better'
+			 	#Card.print_pretty_cards(hs[i])
+			 	payout += bonus[0]
+			elif rs[i] == 1:
+				if score in AcesLow:
+					# print 'hit Four Aces w/ 2-4 on Game {g}'.format(g=n)
+					# Card.print_pretty_cards(hs[i])
+					payout += bonus[4]
+				elif score in AcesHigh:
+					# print 'hit Four Aces w/ 5-k on Game {g}'.format(g=n)
+					# Card.print_pretty_cards(hs[i])
+					payout += bonus[2]
+				elif score in LowLow:
+					# print 'hit Four 2-4 w/ A-4 on Game {g}'.format(g=n)
+					# Card.print_pretty_cards(hs[i])
+					payout += bonus[3]
+				elif score in LowHigh:
+					# print 'hit Four 2-4 w/ 5-k on Game {g}'.format(g=n)
+					# Card.print_pretty_cards(hs[i])
+					payout += bonus[1]
+				else:
+					# print 'hit Four 5-k on Game {g}'.format(g=n)
+					# Card.print_pretty_cards(hs[i])
+					payout += values[rs[i]]
+			elif (score == 1):
+				# print 'hit Royal Flush on Game {g}'.format(g=n)
+				# Card.print_pretty_cards(hs[i])
+				payout += bonus[4]
+			else:
 				payout += values[rs[i]]
-				odds[rs[i]] = odds[rs[i]] + 1.0
+			odds[rs[i]] = odds[rs[i]] + 1.0
 
 		#if k%10 == 0:
 		#	print(rbins)
