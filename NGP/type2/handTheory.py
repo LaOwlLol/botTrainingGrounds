@@ -11,22 +11,12 @@ def getRandomPlay():
 def determinePlay(k, playbook):
 	
 	for pk in list(playbook[0][k].keys()):
-		#if it's a good play try it again
-		if (playbook[1][k][pk]/playbook[0][k][pk]) >= 0:
+		#if it's a 'good' play try it again
+		if (playbook[1][k][pk]/playbook[0][k][pk]) >= -1:
 			return list(pk)
-		#otherwise try something else
-		else:
-			#do we know other plays?
-			#grab one not this one though and not a neg one
-			for n in list(playbook[0][k].keys()):
-				if (playbook[1][k][n]/playbook[0][k][n]) >= 0 and n != pk:
-					return list(n)
-
+	
 	# if we make it this far just return a new one not in the list
-	r = getRandomPlay()
-	while playToKey(r) in playbook[0][k]:
-		r = getRandomPlay()
-	return r
+	return getRandomPlay()
 
 def playToKey(play):
 	return ''.join(str(e) for e in play)
@@ -34,13 +24,13 @@ def playToKey(play):
 def handToKey(hand):
 	handStr = '' 
 	for i in range(len(hand)):
-		handStr += str(Card.get_rank_int(hand[i]))
+		handStr += Card.STR_RANKS[Card.get_rank_int(hand[i])]
 	return handStr
 
 def handSort(hand):
 	return sorted(hand[:], key=lambda x: Card.get_rank_int(x))
 
-values = [49, 49, 8, 6, 3, 1, 0, -1,-1]
+values = [80, 50, 8, 6, 3, 1, -.5, -1,-2]
 
 f = open('handLog', 'w')
 
@@ -66,6 +56,7 @@ for k in tqdm(range(count)):
 
 	#save the initiial rank
 	score1 = ev.evaluate(h, [])
+	rank1 = ev.get_rank_class(score1) - 1
 
 	# randomly generate a "play"
 	key2 = playToKey(p)
@@ -87,24 +78,46 @@ for k in tqdm(range(count)):
 
 	#remember the score
 	score2 = ev.evaluate(h, [])
+	rank2 = ev.get_rank_class(score2) - 1
+
+	# # if we improved value of this play goes up
+	# if score2 < score1:
+	# 	if key2 in handMem[1][key1]:
+	# 		handMem[1][key1][key2] += 1.0
+	# 	else:
+	# 		handMem[1][key1][key2] = 1.0
+	# # if we did worse value of this play goes down
+	# elif score1 < score2:
+	# 	if key2 in handMem[1][key1]:
+	# 		handMem[1][key1][key2] -= 1.0
+	# 	else:
+	# 		handMem[1][key1][key2] = -1.0
+	# else:
+	# 	if key2 in handMem[1][key1]:
+	# 		handMem[1][key1][key2] += 0.1
+	# 	else:
+	# 		handMem[1][key1][key2] = 0.1
 
 	# if we improved value of this play goes up
-	if score2 < score1:
-		if key2 in handMem[1][key1]:
-			handMem[1][key1][key2] += 1.0
-		else:
-			handMem[1][key1][key2] = 1.0
 	# if we did worse value of this play goes down
-	elif score1 < score2:
-		if key2 in handMem[1][key1]:
-			handMem[1][key1][key2] -= 1.0
-		else:
-			handMem[1][key1][key2] = -1.0
-	else:
-		if key2 not in handMem[1][key1]:
-			handMem[1][key1][key2] = 0.0
+	if key2 not in handMem[1][key1]:
+		handMem[1][key1][key2] = 0.0
+
+	handMem[1][key1][key2] += values[rank2] - values[rank1]
 
 f.close()
+
+gr = -1
+key = ''
+for k in list(handMem[0].keys()):
+	if len(handMem[0][k]) > gr :
+		gr = len(handMem[0][k])
+		key = k
+
+print key
+
+for k in list(handMem[0][key].keys()):
+	print ' key: {n} >> {q}'.format(n=k, q=handMem[1][key][k]/handMem[0][key][k])
 
 while True:
 	
@@ -115,7 +128,7 @@ while True:
 		break
 
 	if c in handMem[0]:
-		print handMem[0][c]
-		print handMem[1][c]
+		for k in list(handMem[0][c].keys()):
+			print ' key: {n} >> {q}'.format(n=k, q=handMem[1][c][k]/handMem[0][c][k])
 	else:
 		print 'No Record, Try again.'
