@@ -25,10 +25,11 @@ def handToKey(hand):
 	handStr = '' 
 	for i in range(len(hand)):
 		handStr += Card.STR_RANKS[Card.get_rank_int(hand[i])]
+		handStr += Card.INT_SUIT_TO_CHAR_SUIT[Card.get_suit_int(hand[i])]
 	return handStr
 
 def handSort(hand):
-	return sorted(hand[:], key=lambda x: Card.get_rank_int(x))
+	return sorted(hand[:], key=lambda x: (Card.get_rank_int(x), Card.get_suit_int(x) ))
 
 values = [256, 128, 64, 32, 16, 8, 4, 2, 1]
 
@@ -88,10 +89,7 @@ for k in tqdm(range(count)):
 
 		# if we improved value of this play goes up
 		# if we did worse value of this play goes down
-		if rank1 == rank2:
-			handMem[1][key1][key2] += values[rank2]
-		else:
-			handMem[1][key1][key2] += values[rank2] - values[rank1]
+		handMem[1][key1][key2] += values[rank2] - values[rank1]
 
 
 
@@ -111,14 +109,21 @@ for k in list(handMem[0][key].keys()):
 
 while True:
 	
-	c = ''
-	
-	c = raw_input('Enter card (or "" to quit): ')
-	if c == "":
+	key = raw_input('Enter card (or "" to quit): ')
+	if key == "q":
+		break
+	if key == "dump":
+		f = open('statLog', 'w')
+		for hk in list(handMem[1].keys()):
+			f.write(hk+'\n')
+			for pk in list(handMem[1][hk].keys()):
+				f.write(pk+' >> '+ str(handMem[1][hk][pk]/handMem[0][hk][pk]) + ' == '+ str(handMem[1][hk][pk]) + '/' + str(handMem[0][hk][pk]) +'\n')
+		f.close()
 		break
 
-	if c in handMem[0]:
-		for k in list(handMem[0][c].keys()):
-			print ' key: {n} >> {q}'.format(n=k, q=handMem[1][c][k]/handMem[0][c][k])
+
+	if key in handMem[0]:
+		for k in list(handMem[0][key].keys()):
+			print ' key: {n} >> {q} = {p}/{r}'.format(n=k, q=handMem[1][key][k]/handMem[0][key][k], p=handMem[1][key][k], r=handMem[0][key][k])
 	else:
 		print 'No Record, Try again.'
